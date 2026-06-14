@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>MBBS Topic Generator</title>
+<style>
+  :root{
+    --bg:#eef6f9;
+    --surface:#ffffff;
+    --surface-2:#f3f8fb;
+    --text:#0f2236;
+    --muted:#5b7184;
+    --primary:#0aa1a1;       /* medical teal */
+    --primary-2:#067a7a;
+    --accent:#e63946;        /* medical red cross */
+    --ring:rgba(10,161,161,.25);
+    --border:#dbe6ec;
+    --shadow:0 6px 18px rgba(16,40,60,.06);
+    --radius:14px;
+  }
+  .dark{
+    --bg:#0b1620;
+    --surface:#10202d;
+    --surface-2:#152a3a;
+    --text:#e7eef5;
+    --muted:#9ab0c2;
+    --primary:#3ed0d0;
+    --primary-2:#1aa6a6;
+    --accent:#ff5a6a;
+    --ring:rgba(62,208,208,.25);
+    --border:#1f3445;
+    --shadow:0 10px 28px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(180deg,var(--bg),var(--surface-2));
+    color:var(--text);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+  .container{max-width:980px;margin:0 auto;padding:16px}
+  header{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 16px;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;
+    position:sticky;top:8px;z-index:10;backdrop-filter:saturate(140%);
+  }
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .logo{
+    width:38px;height:38px;border-radius:10px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--primary),var(--primary-2));
+    display:grid;place-items:center;color:#fff;font-weight:800;
+    box-shadow:0 4px 12px var(--ring);
+  }
+  .brand h1{font-size:1.05rem;margin:0;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand small{display:block;color:var(--muted);font-size:.72rem}
+  .icon-btn{
+    background:var(--surface-2);color:var(--text);border:1px solid var(--border);
+    height:42px;min-width:42px;padding:0 12px;border-radius:12px;font-size:1rem;
+    cursor:pointer;transition:transform .1s ease, background .2s;
+  }
+  .icon-btn:active{transform:scale(.96)}
+  .card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:16px;margin:12px 0;
+  }
+  .card h3{margin:0 0 12px;font-size:1rem;display:flex;align-items:center;gap:8px}
+  .row{display:flex;flex-wrap:wrap;gap:10px}
+  .row > *{flex:1 1 160px}
+  label.check{
+    display:flex;align-items:center;gap:8px;color:var(--muted);
+    background:var(--surface-2);border:1px solid var(--border);
+    padding:10px 12px;border-radius:12px;font-size:.92rem;cursor:pointer;
+    flex:0 1 auto;
+  }
+  input[type="text"],select{
+    width:100%;height:46px;padding:0 14px;
+    background:var(--surface-2);color:var(--text);
+    border:1px solid var(--border);border-radius:12px;font-size:1rem;outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  input[type="text"]:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--ring)}
+  .btn{
+    appearance:none;border:0;cursor:pointer;font-weight:700;font-size:1rem;
+    height:50px;padding:0 18px;border-radius:12px;color:#fff;
+    background:linear-gradient(135deg,var(--primary),var(--primary-2));
+    box-shadow:0 6px 16px var(--ring);transition:transform .08s ease, filter .2s;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  }
+  .btn:active{transform:translateY(1px) scale(.99)}
+  .btn.secondary{background:var(--surface-2);color:var(--text);border:1px solid var(--border);box-shadow:none}
+  .btn.accent{background:linear-gradient(135deg,var(--accent),#b3202c);box-shadow:0 6px 16px rgba(230,57,70,.25)}
+  .btn.ghost{background:transparent;color:var(--primary);border:1px solid var(--primary)}
+  .result{
+    margin-top:12px;padding:18px;border-radius:12px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-2));color:#fff;
+    text-align:center;font-size:1.35rem;font-weight:800;line-height:1.3;min-height:80px;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);
+  }
+  .result .meta{font-size:.78rem;font-weight:600;opacity:.85;text-transform:uppercase;letter-spacing:.1em}
+  .result .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center}
+  .result .actions button{
+    background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);
+    padding:8px 12px;border-radius:10px;font-size:.85rem;cursor:pointer;font-weight:600;
+  }
+  .result .actions button:hover{background:rgba(255,255,255,.28)}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--surface-2);color:var(--muted);
+    padding:6px 10px;border-radius:999px;font-size:.78rem;border:1px solid var(--border);
+  }
+  .progress-wrap{margin-top:10px}
+  .progress-bar{height:10px;background:var(--surface-2);border-radius:999px;overflow:hidden;border:1px solid var(--border)}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .4s ease;width:0%}
+  .progress-stats{display:flex;justify-content:space-between;margin-top:8px;color:var(--muted);font-size:.85rem}
+  .list{margin-top:10px;display:flex;flex-direction:column;gap:8px;max-height:320px;overflow:auto}
+  .list-item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);
+  }
+  .list-item .t{min-width:0;flex:1}
+  .list-item .t .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .list-item .t .sub{font-size:.75rem;color:var(--muted)}
+  .list-item.done .name{text-decoration:line-through;color:var(--muted)}
+  .list-item button{
+    background:transparent;border:1px solid var(--border);color:var(--text);
+    padding:6px 10px;border-radius:8px;cursor:pointer;font-size:.8rem;
+  }
+  .list-item button.danger{color:var(--accent);border-color:var(--accent)}
+  .empty{color:var(--muted);font-size:.9rem;text-align:center;padding:14px}
+  .idea-card{
+    margin-top:10px;padding:14px;border-radius:12px;background:var(--surface-2);
+    border:1px dashed var(--border);
+  }
+  .idea-card .cat{font-size:.72rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.1em}
+  .idea-card .text{margin-top:6px;font-size:1.05rem;font-weight:600;line-height:1.4}
+  @media (min-width:720px){
+    .container{padding:24px}
+    .btn{width:auto;min-width:200px}
+    header{top:16px}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="brand">
+      <div class="logo">+</div>
+      <div style="min-width:0">
+        <h1>MBBS Topic Generator</h1>
+        <small>Study smarter, one topic at a time</small>
+      </div>
+    </div>
+    <button class="icon-btn" id="darkBtn" onclick="toggleDark()" aria-label="Toggle dark mode">🌙</button>
+  </header>
+
+  <!-- Generator -->
+  <div class="card">
+    <h3>🎲 Random Topic</h3>
+    <div class="row">
+      <select id="subjectFilter" aria-label="Subject"></select>
+      <label class="check"><input type="checkbox" id="hideCompleted"> Hide completed</label>
+    </div>
+    <div style="margin-top:10px" class="row">
+      <button class="btn" onclick="generateTopic()">🎯 Generate Topic</button>
+    </div>
+    <div id="result" class="result">
+      <div class="meta">Tap generate</div>
+      <div>Your next topic appears here</div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="card">
+    <h3>📊 Progress</h3>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-stats">
+        <span id="progressText">0 / 0 completed</span>
+        <span id="progressPct">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add -->
+  <div class="card">
+    <h3>➕ Add Subject / Topic</h3>
+    <div class="row">
+      <input type="text" id="newSubject" placeholder="Subject (e.g. Anatomy)" list="subjectsList">
+      <datalist id="subjectsList"></datalist>
+      <input type="text" id="newTopic" placeholder="Topic (e.g. Brachial Plexus)">
+    </div>
+    <div style="margin-top:10px" class="row">
+      <button class="btn" onclick="addTopic()">Add Topic</button>
+      <button class="btn secondary" onclick="addSubjectOnly()">Add Subject Only</button>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="card">
+    <h3>🔍 Search & Manage Topics</h3>
+    <input type="text" id="search" oninput="searchTopics()" placeholder="Search topics or subjects...">
+    <div id="searchResults" class="list"></div>
+  </div>
+
+  <!-- Content Creator -->
+  <div class="card">
+    <h3>🎬 Content Creator Mode</h3>
+    <p style="margin:0;color:var(--muted);font-size:.9rem">Get random content ideas: myths, clinical facts, lab values, drug facts, awareness topics.</p>
+    <div style="margin-top:10px" class="row">
+      <button class="btn accent" onclick="contentIdea()">💡 Generate Idea</button>
+    </div>
+    <div id="idea"></div>
+  </div>
+
+  <!-- Reset -->
+  <div class="card">
+    <h3>⚙️ Data</h3>
+    <div class="row">
+      <button class="btn secondary" onclick="exportData()">⬇️ Export JSON</button>
+      <button class="btn secondary" onclick="resetData()">♻️ Reset to Default</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Default Data ---------- */
+const DEFAULT_DATA = {
+  "Anatomy":["Brachial Plexus","Facial Nerve","Inguinal Canal","Circle of Willis","Femoral Triangle","Axilla","Cranial Nerves I-XII","Coronary Arteries","Portal Vein","Larynx","Pharynx","Heart Chambers","Mediastinum","Diaphragm","Liver Anatomy","Spleen","Kidney Anatomy","Pelvis","Perineum","Scalp Layers","Skull Foramina","Cavernous Sinus","Dural Venous Sinuses","Spinal Cord Tracts","Cerebellum","Basal Ganglia","Thalamus","Hypothalamus","Eye Anatomy","Ear Anatomy","Tongue Innervation","Carotid Sheath","Thyroid Gland","Parotid Gland","Hand Muscles","Foot Arches","Knee Joint","Shoulder Joint","Hip Joint","Vertebral Column"],
+  "Physiology":["Cardiac Cycle","ECG Waves","Blood Pressure Regulation","Renal Clearance","Respiration Mechanics","Acid-Base Balance","Vision Pathway","Hearing Pathway","Muscle Contraction","Endocrine Regulation","Hemoglobin & Oxygen Transport","Erythropoiesis","Coagulation Cascade","GFR","Tubular Reabsorption","Insulin Secretion","Thyroid Hormones","Cortisol Axis","Reproductive Cycle","Menstrual Cycle","Pregnancy Physiology","Lactation","Body Temperature Regulation","Sleep Stages","Memory & Learning","Synaptic Transmission","Reflex Arc","Autonomic Nervous System","Baroreceptor Reflex","Chemoreceptor Reflex","GI Motility","Gastric Acid Secretion","Bile Secretion","Pancreatic Secretion","Surfactant","Lung Volumes","Oxygen Dissociation Curve","Cardiac Output","Frank-Starling Law","Capillary Exchange"],
+  "Biochemistry":["Glycolysis","TCA Cycle","Urea Cycle","HMP Shunt","DNA Replication","Transcription","Translation","Lipoproteins","Enzymes Classification","Vitamins A-K","Gluconeogenesis","Glycogen Metabolism","Fatty Acid Oxidation","Ketogenesis","Cholesterol Synthesis","Amino Acid Metabolism","Heme Synthesis","Porphyrias","Purine Metabolism","Pyrimidine Metabolism","Genetic Code","Mutations","DNA Repair","PCR","Western Blot","Southern Blot","ELISA","Glycolysis Regulation","Electron Transport Chain","Oxidative Phosphorylation","Free Radicals","Antioxidants","Trace Elements","Calcium Metabolism","Iron Metabolism","Bilirubin Metabolism","Acid Base Biochemistry","Buffer Systems","Inborn Errors of Metabolism","Hormone Signaling"],
+  "Pathology":["Inflammation","Shock","Amyloidosis","Neoplasia","Thrombosis","Embolism","Atherosclerosis","Leukemia","Anemia","Cirrhosis","Cell Injury","Apoptosis","Necrosis","Granuloma","Wound Healing","Edema","Hemorrhage","Infarction","Hypertension Pathology","MI Pathology","Rheumatic Heart Disease","Tuberculosis Pathology","Pneumonia","COPD","Asthma Pathology","Glomerulonephritis","Nephrotic Syndrome","Renal Failure","Hepatitis","Hepatocellular Carcinoma","Gastric Cancer","Colorectal Cancer","Breast Cancer","Cervical Cancer","Lymphomas","Multiple Myeloma","Sickle Cell Disease","Thalassemia","DIC","Tumor Markers"],
+  "Pharmacology":["Beta Blockers","NSAIDs","Diuretics","ACE Inhibitors","Antibiotics Overview","Insulin","Antiepileptics","Antidepressants","Opioids","Antihistamines","Calcium Channel Blockers","Statins","Anticoagulants","Antiplatelets","Bronchodilators","Corticosteroids","Antifungals","Antivirals","Antimalarials","Antitubercular Drugs","Chemotherapy Basics","Immunosuppressants","Antipsychotics","Anxiolytics","General Anesthetics","Local Anesthetics","Skeletal Muscle Relaxants","Antiemetics","PPIs & H2 Blockers","Laxatives","Antidiarrheals","Oral Hypoglycemics","Thyroid Drugs","Hormonal Contraceptives","Vasopressors","Antiarrhythmics","Drug Interactions","Pharmacokinetics","Pharmacodynamics","Adverse Drug Reactions"],
+  "Microbiology":["Tuberculosis","Malaria","Dengue","HIV","Hepatitis B","Typhoid","Leprosy","COVID-19","Fungal Infections","Sterilization & Disinfection","Staphylococcus","Streptococcus","E. coli","Salmonella","Shigella","Vibrio cholerae","Clostridium","Mycobacterium","Neisseria","Pseudomonas","Helicobacter pylori","Influenza","Measles","Rabies","Polio","Herpesviruses","HPV","Candida","Aspergillus","Cryptococcus","Amoebiasis","Giardiasis","Leishmaniasis","Filariasis","Toxoplasmosis","Bacterial Cell Wall","Vaccines","Hospital Acquired Infections","Antibiotic Resistance","Lab Diagnosis Techniques"],
+  "Forensic Medicine":["Poisoning","IPC Sections","Identification","Autopsy","Asphyxia","Burns","Sexual Offences","Injuries Classification","Toxicology","Death Investigation","Medical Negligence","Consent","MTP Act","PCPNDT Act","Drug Schedules","Postmortem Changes","Time Since Death","Firearm Injuries","Stab Wounds","Hanging","Strangulation","Drowning","Heat Stroke","Electrocution","Lightning","Alcohol Intoxication","Organophosphate Poisoning","Snake Bite","Arsenic Poisoning","Cyanide Poisoning","Paracetamol Poisoning","DNA Fingerprinting","Age Estimation","Sex Determination","Stature Estimation","Dying Declaration","Court Procedures","Medical Records","Euthanasia","Medical Ethics"],
+  "Community Medicine":["Epidemiology Basics","Study Designs","Bias & Confounding","Screening","Sensitivity & Specificity","Immunization Schedule","National Health Programs","RNTCP","NVBDCP","RMNCH+A","Maternal Mortality","Infant Mortality","Demography","Family Planning","Nutrition Programs","Vitamin Deficiencies","ICDS","Mid Day Meal","Water Supply","Sanitation","Waste Management","Air Pollution","Occupational Health","Biomedical Waste","Disaster Management","Health Education","Primary Health Care","Health Indicators","Vital Statistics","Census","Sample Surveys","Outbreak Investigation","Disinfection Methods","Vector Control","Zoonotic Diseases","NCD Programs","Mental Health Program","School Health","Geriatric Health","Social Medicine"],
+  "ENT":["Otitis Media","Otosclerosis","Meniere's Disease","Vertigo","Tinnitus","Hearing Loss","Tonsillitis","Adenoids","Pharyngitis","Laryngitis","Vocal Cord Palsy","Nasal Polyps","Sinusitis","Epistaxis","Deviated Nasal Septum","Allergic Rhinitis","Foreign Body Ear","Foreign Body Nose","Foreign Body Throat","Tracheostomy","CSOM","ASOM","Mastoiditis","Facial Nerve Palsy","Stridor","Glottic Carcinoma","Nasopharyngeal Carcinoma","Cleft Lip & Palate","Quinsy","Ludwig's Angina","Snoring & OSA","Acoustic Neuroma","Cholesteatoma","Audiometry","Tympanometry","Rinne & Weber Tests","Tracheal Stenosis","Hoarseness","Globus Sensation","Sleep Apnea"],
+  "Ophthalmology":["Cataract","Glaucoma","Diabetic Retinopathy","Hypertensive Retinopathy","Refractive Errors","Squint","Amblyopia","Conjunctivitis","Trachoma","Keratitis","Corneal Ulcer","Uveitis","Retinal Detachment","Macular Degeneration","Optic Neuritis","Papilledema","Color Blindness","Night Blindness","Vitamin A Deficiency","Pterygium","Stye","Chalazion","Dacryocystitis","Orbital Cellulitis","Ocular Trauma","Ocular Tumors","Retinoblastoma","Strabismus Surgery","LASIK","Phacoemulsification","Visual Field Testing","Slit Lamp Exam","Fundoscopy","Tonometry","Anisocoria","Argyll Robertson Pupil","Horner's Syndrome","Marcus Gunn Pupil","Lens Dislocation","Vitreous Hemorrhage"],
+  "General Medicine":["Hypertension","Diabetes Mellitus","Ischemic Heart Disease","Heart Failure","COPD","Asthma","Pneumonia","Tuberculosis","Stroke","Epilepsy","Migraine","Parkinson's Disease","Alzheimer's Disease","Multiple Sclerosis","Guillain-Barré Syndrome","Hyperthyroidism","Hypothyroidism","Cushing's Syndrome","Addison's Disease","Acromegaly","Rheumatoid Arthritis","SLE","Gout","Chronic Kidney Disease","Acute Kidney Injury","Liver Cirrhosis","Hepatitis","Pancreatitis","Peptic Ulcer Disease","IBD","Anemia Workup","Leukemias","Lymphomas","HIV/AIDS","Sepsis","DKA","Hyperkalemia","Hyponatremia","Pulmonary Embolism","Atrial Fibrillation"],
+  "General Surgery":["Acute Appendicitis","Cholecystitis","Hernias","Intestinal Obstruction","Peritonitis","Hemorrhoids","Fissure in Ano","Fistula in Ano","Pilonidal Sinus","Varicose Veins","DVT","Breast Lump Evaluation","Breast Cancer Surgery","Thyroid Surgery","Goiter","Burns Management","Wound Healing","Trauma Resuscitation","Head Injury","Chest Injury","Abdominal Trauma","Splenic Injury","Liver Trauma","Pancreatic Pseudocyst","Gallstones","Obstructive Jaundice","Esophageal Cancer","Gastric Cancer","Colorectal Cancer","Stoma Care","Sutures & Knots","Surgical Instruments","Sterilization","Anesthesia Basics","Day Care Surgery","Laparoscopy","Hydrocele","Varicocele","Phimosis","Carcinoma Penis"],
+  "Obstetrics":["Antenatal Care","Normal Labor","Stages of Labor","Partogram","Postpartum Hemorrhage","Pre-eclampsia","Eclampsia","Gestational Diabetes","Ectopic Pregnancy","Abortion","Placenta Previa","Abruptio Placentae","Multiple Pregnancy","Breech Presentation","Cesarean Section","Forceps Delivery","Vacuum Delivery","Rh Incompatibility","IUGR","Polyhydramnios","Oligohydramnios","PROM","Preterm Labor","Postdated Pregnancy","Puerperal Sepsis","Hyperemesis Gravidarum","Anemia in Pregnancy","Hypertension in Pregnancy","Hepatitis in Pregnancy","HIV in Pregnancy","Fetal Monitoring","Ultrasound in Pregnancy","Amniocentesis","Chorionic Villus Sampling","Lactation Management","Contraception Postpartum","Maternal Mortality","Safe Motherhood","Episiotomy","Shoulder Dystocia"],
+  "Gynecology":["Menstrual Cycle Disorders","PCOS","Endometriosis","Fibroid Uterus","Ovarian Cysts","Cervical Cancer","Endometrial Cancer","Ovarian Cancer","PID","Vaginitis","Menopause","Infertility Workup","Contraception","IUCD","Oral Contraceptive Pills","Emergency Contraception","Tubal Ligation","Hysterectomy","D&C","Pap Smear","HPV Vaccine","Prolapse Uterus","Stress Incontinence","DUB","Amenorrhea","Dysmenorrhea","Premenstrual Syndrome","Hirsutism","Galactorrhea","Vesicovaginal Fistula","Rectovaginal Fistula","Bartholin Cyst","Vulvar Cancer","Gestational Trophoblastic Disease","Hydatidiform Mole","Choriocarcinoma","Hormone Replacement Therapy","Adolescent Gynecology","Genital TB","Sexually Transmitted Infections"],
+  "Pediatrics":["Neonatal Resuscitation","Neonatal Jaundice","Birth Asphyxia","Prematurity","Low Birth Weight","Breastfeeding","Weaning","Immunization Schedule","Growth & Development","Milestones","Malnutrition","Kwashiorkor","Marasmus","Vitamin Deficiencies","Anemia in Children","Rickets","Cerebral Palsy","Down Syndrome","Congenital Heart Disease","Rheumatic Fever","Pneumonia in Children","Bronchiolitis","Asthma in Children","Diarrhea & ORS","Dehydration","Typhoid in Children","Measles","Mumps","Chickenpox","Diphtheria","Pertussis","Tetanus Neonatorum","Meningitis","Encephalitis","Febrile Seizures","Epilepsy in Children","Nephrotic Syndrome","UTI in Children","ADHD","Autism Spectrum Disorder"],
+  "Orthopedics":["Fracture Healing","Open vs Closed Fractures","Colles Fracture","Smith Fracture","Scaphoid Fracture","Supracondylar Fracture","Femur Fractures","Tibial Fractures","Pelvic Fractures","Spine Fractures","Dislocations","Shoulder Dislocation","Hip Dislocation","Osteomyelitis","Septic Arthritis","Tuberculosis of Spine","Rheumatoid Arthritis","Osteoarthritis","Gout","Ankylosing Spondylitis","Bone Tumors","Osteosarcoma","Ewing's Sarcoma","Giant Cell Tumor","Multiple Myeloma","Osteoporosis","Osteomalacia","Paget's Disease","Carpal Tunnel Syndrome","Cervical Spondylosis","Lumbar Disc Prolapse","Sciatica","Congenital Hip Dislocation","Club Foot","Perthes Disease","Slipped Capital Femoral Epiphysis","Plaster Techniques","Traction","External Fixation","Arthroscopy"],
+  "Dermatology":["Acne Vulgaris","Eczema","Psoriasis","Lichen Planus","Pityriasis Rosea","Vitiligo","Melasma","Urticaria","Drug Eruptions","Steven-Johnson Syndrome","Toxic Epidermal Necrolysis","Pemphigus","Bullous Pemphigoid","Leprosy","Scabies","Pediculosis","Tinea Infections","Candidiasis","Herpes Simplex","Herpes Zoster","Warts","Molluscum Contagiosum","Impetigo","Cellulitis","Erysipelas","Alopecia","Hirsutism","Melanoma","Squamous Cell Carcinoma","Basal Cell Carcinoma","Albinism","Ichthyosis","Rosacea","Seborrheic Dermatitis","Contact Dermatitis","Atopic Dermatitis","Erythema Multiforme","Photo Dermatitis","Nail Disorders","Hair Disorders"],
+  "Psychiatry":["Schizophrenia","Bipolar Disorder","Major Depression","Anxiety Disorders","Panic Disorder","OCD","PTSD","Phobias","Somatoform Disorders","Conversion Disorder","Dissociative Disorders","Personality Disorders","Eating Disorders","Anorexia Nervosa","Bulimia Nervosa","Substance Use Disorders","Alcohol Dependence","Opioid Dependence","Delirium","Dementia","Mental Retardation","ADHD","Autism","Conduct Disorder","Sleep Disorders","Sexual Dysfunctions","Suicide Assessment","ECT","Psychotherapy Basics","Cognitive Behavioral Therapy","Antipsychotic Side Effects","Lithium Toxicity","Serotonin Syndrome","Neuroleptic Malignant Syndrome","Mental Status Examination","Mini Mental State Exam","Child Psychiatry","Geriatric Psychiatry","Forensic Psychiatry","Community Mental Health"],
+  "Radiology":["X-ray Chest Basics","X-ray Abdomen","Pneumothorax","Pleural Effusion","Lung Cancer Imaging","Tuberculosis Imaging","Pneumonia Imaging","CT Head","Stroke Imaging","Brain Tumors","MRI Basics","Ultrasound Abdomen","Gallstones US","Liver Imaging","Renal Imaging","Hydronephrosis","Obstetric Ultrasound","Fetal Anomaly Scan","Doppler Studies","Echocardiography","Mammography","Bone X-ray Interpretation","Fracture Imaging","Skull X-ray","Spine Imaging","Disc Prolapse MRI","Contrast Studies","Barium Studies","IVP","CT Angiography","MR Angiography","PET Scan","Nuclear Medicine","Radiation Safety","Interventional Radiology","Biopsy Guidance","Pediatric Radiology","Emergency Radiology","Trauma Imaging","Cardiac CT"]
+};
+
+const CONTENT_IDEAS = [
+  {cat:"Medical Myth", text:"Cracking your knuckles causes arthritis — true or false?"},
+  {cat:"Clinical Fact", text:"The murmur of mitral stenosis is best heard at the apex in left lateral position."},
+  {cat:"Lab Value", text:"Normal serum sodium: 135–145 mEq/L. <120 = severe hyponatremia."},
+  {cat:"Drug Fact", text:"Amiodarone can cause pulmonary fibrosis, thyroid dysfunction & corneal deposits."},
+  {cat:"Awareness", text:"World TB Day is observed on March 24 each year."},
+  {cat:"Medical Myth", text:"Reading in dim light damages your eyes — is it true?"},
+  {cat:"Clinical Fact", text:"Kussmaul breathing is deep, labored breathing seen in DKA."},
+  {cat:"Lab Value", text:"HbA1c >6.5% is diagnostic of diabetes mellitus."},
+  {cat:"Drug Fact", text:"Metformin is contraindicated in patients with eGFR <30 mL/min."},
+  {cat:"Awareness", text:"World Hypertension Day: May 17 — Know Your Numbers."},
+  {cat:"Medical Myth", text:"You only use 10% of your brain — actually, you use most of it daily."},
+  {cat:"Clinical Fact", text:"Beck's triad of cardiac tamponade: hypotension, muffled heart sounds, raised JVP."},
+  {cat:"Lab Value", text:"Normal anion gap: 8–12 mEq/L. Elevated in MUDPILES."},
+  {cat:"Drug Fact", text:"Warfarin works by inhibiting vitamin K-dependent factors II, VII, IX, X."},
+  {cat:"Awareness", text:"World Diabetes Day: November 14 — Birthday of Sir Frederick Banting."},
+  {cat:"Medical Myth", text:"Eating late at night directly causes weight gain — context matters more."},
+  {cat:"Clinical Fact", text:"Charcot's triad of cholangitis: fever, jaundice, RUQ pain."},
+  {cat:"Lab Value", text:"Normal CSF glucose: 50–80 mg/dL (about 2/3 of plasma)."},
+  {cat:"Drug Fact", text:"Aspirin irreversibly inhibits COX-1 for the platelet's lifespan (~7-10 days)."},
+  {cat:"Awareness", text:"World AIDS Day: December 1 — Get tested, end stigma."},
+  {cat:"Medical Myth", text:"Sugar makes children hyperactive — multiple studies say no direct link."},
+  {cat:"Clinical Fact", text:"Cullen's sign and Grey Turner's sign suggest hemorrhagic pancreatitis."},
+  {cat:"Lab Value", text:"Troponin I rises within 3-6 hours of MI, peaks at 12-24 hours."},
+  {cat:"Drug Fact", text:"Statins are best taken at night due to peak cholesterol synthesis."},
+  {cat:"Awareness", text:"World Mental Health Day: October 10 — Talk about it."},
+  {cat:"Medical Myth", text:"Vaccines cause autism — debunked repeatedly by large studies."},
+  {cat:"Clinical Fact", text:"Virchow's node — left supraclavicular lymph node in gastric cancer."},
+  {cat:"Lab Value", text:"INR target for most warfarin indications: 2.0–3.0."},
+  {cat:"Drug Fact", text:"Paracetamol toxicity is treated with N-acetylcysteine."},
+  {cat:"Awareness", text:"Breast Cancer Awareness Month: October — Self-examine monthly."}
+];
+
+/* ---------- State ---------- */
+const STORAGE_KEY = "mbbs_topic_generator_v1";
+let state = loadState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const s = JSON.parse(raw);
+      if(s && s.data) return s;
+    }
+  }catch(e){}
+  return { data: structuredClone(DEFAULT_DATA), completed: {}, dark:false };
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+/* ---------- Helpers ---------- */
+const $ = id => document.getElementById(id);
+function key(subject, topic){ return subject + "||" + topic; }
+function isDone(subject, topic){ return !!state.completed[key(subject,topic)]; }
+function toggleDone(subject, topic){
+  const k = key(subject,topic);
+  if(state.completed[k]) delete state.completed[k]; else state.completed[k] = true;
+  saveState(); renderAll();
+}
+function allTopics(){
+  const out = [];
+  for(const [s, list] of Object.entries(state.data)){
+    for(const t of list) out.push({subject:s, topic:t});
+  }
+  return out;
+}
+
+/* ---------- Rendering ---------- */
+function renderSubjects(){
+  const sel = $("subjectFilter");
+  const current = sel.value || "__all__";
+  const subjects = Object.keys(state.data).sort();
+  sel.innerHTML = `<option value="__all__">All Subjects (${allTopics().length})</option>` +
+    subjects.map(s=>`<option value="${escapeAttr(s)}">${escapeHtml(s)} (${state.data[s].length})</option>`).join("");
+  sel.value = subjects.includes(current) || current === "__all__" ? current : "__all__";
+
+  const dl = $("subjectsList");
+  dl.innerHTML = subjects.map(s=>`<option value="${escapeAttr(s)}">`).join("");
+}
+function renderProgress(){
+  const total = allTopics().length;
+  const done = allTopics().filter(x=>isDone(x.subject,x.topic)).length;
+  const pct = total ? Math.round((done/total)*100) : 0;
+  $("progressFill").style.width = pct + "%";
+  $("progressText").textContent = `${done} / ${total} completed`;
+  $("progressPct").textContent = pct + "%";
+}
+function renderAll(){ renderSubjects(); renderProgress(); searchTopics(); }
+
+/* ---------- Generator ---------- */
+function generateTopic(){
+  const subject = $("subjectFilter").value;
+  const hide = $("hideCompleted").checked;
+  let pool = subject === "__all__" ? allTopics() : (state.data[subject]||[]).map(t=>({subject,topic:t}));
+  if(hide) pool = pool.filter(x=>!isDone(x.subject,x.topic));
+  const res = $("result");
+  if(!pool.length){
+    res.innerHTML = `<div class="meta">No topics available</div><div>Add some, or uncheck "Hide completed".</div>`;
+    return;
+  }
+  const pick = pool[Math.floor(Math.random()*pool.length)];
+  const done = isDone(pick.subject, pick.topic);
+  res.innerHTML = `
+    <div class="meta">${escapeHtml(pick.subject)}</div>
+    <div>${escapeHtml(pick.topic)}</div>
+    <div class="actions">
+      <button onclick="toggleDone(${JSON.stringify(pick.subject)}, ${JSON.stringify(pick.topic)})">
+        ${done ? "↩️ Mark Pending" : "✅ Mark Completed"}
+      </button>
+      <button onclick="generateTopic()">🎲 Another</button>
+    </div>`;
+}
+
+/* ---------- Add ---------- */
+function addTopic(){
+  const sub = $("newSubject").value.trim();
+  const top = $("newTopic").value.trim();
+  if(!sub || !top){ alert("Enter both subject and topic."); return; }
+  if(!state.data[sub]) state.data[sub] = [];
+  if(state.data[sub].some(t=>t.toLowerCase()===top.toLowerCase())){ alert("Topic already exists."); return; }
+  state.data[sub].push(top);
+  $("newTopic").value = "";
+  saveState(); renderAll();
+}
+function addSubjectOnly(){
+  const sub = $("newSubject").value.trim();
+  if(!sub){ alert("Enter a subject."); return; }
+  if(!state.data[sub]) state.data[sub] = [];
+  $("newSubject").value = "";
+  saveState(); renderAll();
+}
+
+/* ---------- Search ---------- */
+function searchTopics(){
+  const q = ($("search").value||"").toLowerCase().trim();
+  const list = allTopics().filter(x=>
+    !q || x.topic.toLowerCase().includes(q) || x.subject.toLowerCase().includes(q)
+  );
+  const box = $("searchResults");
+  if(!list.length){ box.innerHTML = `<div class="empty">No matches. Try another keyword.</div>`; return; }
+  const shown = list.slice(0,150);
+  box.innerHTML = shown.map(x=>{
+    const done = isDone(x.subject,x.topic);
+    const sj = JSON.stringify(x.subject), tj = JSON.stringify(x.topic);
+    return `
+      <div class="list-item ${done?'done':''}">
+        <div class="t">
+          <div class="name">${escapeHtml(x.topic)}</div>
+          <div class="sub">${escapeHtml(x.subject)}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button onclick='toggleDone(${sj},${tj})'>${done?'Undo':'Done'}</button>
+          <button class="danger" onclick='deleteTopic(${sj},${tj})'>Delete</button>
+        </div>
+      </div>`;
+  }).join("") + (list.length>shown.length?`<div class="empty">Showing first ${shown.length} of ${list.length}</div>`:"");
+}
+function deleteTopic(subject, topic){
+  if(!confirm(`Delete "${topic}" from ${subject}?`)) return;
+  state.data[subject] = (state.data[subject]||[]).filter(t=>t!==topic);
+  delete state.completed[key(subject,topic)];
+  saveState(); renderAll();
+}
+
+/* ---------- Content Creator ---------- */
+function contentIdea(){
+  const pick = CONTENT_IDEAS[Math.floor(Math.random()*CONTENT_IDEAS.length)];
+  $("idea").innerHTML = `<div class="idea-card"><div class="cat">${escapeHtml(pick.cat)}</div><div class="text">${escapeHtml(pick.text)}</div></div>`;
+}
+
+/* ---------- Dark Mode ---------- */
+function toggleDark(){
+  state.dark = !state.dark;
+  document.body.classList.toggle("dark", state.dark);
+  $("darkBtn").textContent = state.dark ? "☀️" : "🌙";
+  saveState();
+}
+
+/* ---------- Data utils ---------- */
+function exportData(){
+  const blob = new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "mbbs_topics.json"; a.click();
+  URL.revokeObjectURL(url);
+}
+function resetData(){
+  if(!confirm("Reset all topics and progress to defaults?")) return;
+  state = { data: structuredClone(DEFAULT_DATA), completed:{}, dark: state.dark };
+  saveState(); renderAll();
+  $("result").innerHTML = `<div class="meta">Reset complete</div><div>Tap generate to start.</div>`;
+}
+
+/* ---------- Escapers ---------- */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+
+/* ---------- Init ---------- */
+if(state.dark){ document.body.classList.add("dark"); $("darkBtn").textContent = "☀️"; }
+renderAll();
+</script>
+</body>
+</html>
